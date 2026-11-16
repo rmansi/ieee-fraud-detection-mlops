@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
-PROCESSED = Path("src/data/processed")
+PROCESSED = Path("data/processed")
 
 def load_and_merge(processed_dir: Path = PROCESSED) -> pd.DataFrame:
     """Load transaction + identity tables and join them on TransactionID."""
@@ -37,7 +37,9 @@ def time_split(df: pd.DataFrame, valid_frac: float = 0.2):
 NON_FEATURES = ["isFraud", "TransactionID", "TransactionDT"]
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
     """Add engineered features. Modifies df in place (avoids copying ~1 GB)."""
-    feature_cols = df.columns.drop(NON_FEATURES + ["has_identity"])
+    feature_cols = df.columns.drop(
+        NON_FEATURES + ["has_identity", "n_missing"], errors="ignore"
+    )
     df["n_missing"] = df[feature_cols].isna().sum(axis=1).astype("int16")
     return df
 

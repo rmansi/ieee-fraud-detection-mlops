@@ -75,6 +75,10 @@ def main():
 
         # save which columns the model expects, for the API later
         mlflow.log_dict({"columns": list(cols)}, "columns.json")
+        # save each category column's training values, for the API
+        cat_cols = X_train[cols].select_dtypes("category").columns
+        categories = {c: X_train[c].cat.categories.tolist() for c in cat_cols}
+        mlflow.log_dict(categories, "categories.json")
 
         if args.model == "xgboost":
             mlflow.xgboost.log_model(model, name="model",
