@@ -1,9 +1,10 @@
 .venv/
 venv/
-data/
+/data/
 mlflow.db
 mlruns/
 mlartifacts/
 __pycache__/
 .ipynb_checkpoints/
 .env
+.idea/

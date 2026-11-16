@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 
-RAW = Path("src/data")  # change to Path("data/raw") if you move the CSVs
-OUT = Path("src/data/processed")
+RAW = Path("../../data")  # change to Path("data/raw") if you move the CSVs
+OUT = Path("../../data/processed")
 
 
 def shrink(df: pd.DataFrame) -> pd.DataFrame:
