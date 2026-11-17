@@ -1,0 +1,10 @@
+data/
+.venv/
+venv/
+.idea/
+.git/
+mlruns/
+mlartifacts/
+mlflow.db
+*.ipynb
+__pycache__/

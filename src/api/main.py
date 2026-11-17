@@ -15,10 +15,11 @@ import time
 from fastapi import Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 import numpy as np
+import json
+import os
+from pathlib import Path
 
-
-MODEL_NAME = "fraud-xgboost"
-MODEL_VERSION = "2"
+MODEL_DIR = Path(os.getenv("MODEL_DIR", "model_store"))
 state = {}  # holds the model and its metadata while the API runs
 PREDICTIONS = Counter("fraud_predictions_total", "Predictions served")
 REJECTED = Counter("fraud_requests_rejected_total", "Requests rejected by input checks")
@@ -32,14 +33,13 @@ SCORES = Histogram(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
-    state["model"] = mlflow.xgboost.load_model(f"models:/{MODEL_NAME}/{MODEL_VERSION}")
-    state["model"].set_params(n_jobs=1)
-    # find the training run that produced this model version, and load its metadata
-    run_id = mlflow.MlflowClient().get_model_version(MODEL_NAME, MODEL_VERSION).run_id
-    state["columns"] = mlflow.artifacts.load_dict(f"runs:/{run_id}/columns.json")["columns"]
-    state["categories"] = mlflow.artifacts.load_dict(f"runs:/{run_id}/categories.json")
-    # prepare the category types once at startup, instead of on every request
+    # everything comes from one exported folder, the same locally and in Docker
+    state["model"] = mlflow.xgboost.load_model(str(MODEL_DIR / "model"))
+    state["model"].set_params(n_jobs=1)   # one row doesn't need many threads
+    state["columns"] = json.loads((MODEL_DIR / "columns.json").read_text())["columns"]
+    state["categories"] = json.loads((MODEL_DIR / "categories.json").read_text())
+    state["version"] = (MODEL_DIR / "version.txt").read_text().strip()
+
     state["cat_dtypes"] = {
         col: pd.CategoricalDtype(cats) for col, cats in state["categories"].items()
     }
@@ -89,7 +89,7 @@ def prepare(features: dict) -> pd.DataFrame:
 @app.get("/health")
 def health():
     return {"status": "ok", "model_loaded": "model" in state,
-            "model_version": MODEL_VERSION}
+            "model_version": state["version"]}
 
 
 @app.post("/predict")
@@ -100,15 +100,12 @@ def predict(tx: Transaction):
     except HTTPException:
         REJECTED.inc()
         raise
-    t_prepared = time.perf_counter()
     prob = float(state["model"].predict_proba(df)[0, 1])
-    t_predicted = time.perf_counter()
-    print(f"prepare: {t_prepared - start:.3f}s | predict: {t_predicted - t_prepared:.3f}s")
 
     LATENCY.observe(time.perf_counter() - start)
     PREDICTIONS.inc()
     SCORES.observe(prob)
-    return {"fraud_probability": round(prob, 6), "model_version": MODEL_VERSION}
+    return {"fraud_probability": round(prob, 6), "model_version": state["version"]}
 
 @app.get("/metrics")
 def metrics():
