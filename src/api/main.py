@@ -3,21 +3,21 @@
 Run from the project root:
     uvicorn src.api.main:app --reload
 """
+import json
+import os
+import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import mlflow
 import mlflow.xgboost
-import pandas as pd
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from src.features.build_features import add_features
-import time
-from fastapi import Response
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 import numpy as np
-import json
-import os
-from pathlib import Path
+import pandas as pd
+from fastapi import FastAPI, HTTPException, Response
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from pydantic import BaseModel
+
+from src.features.build_features import add_features
 
 MODEL_DIR = Path(os.getenv("MODEL_DIR", "model_store"))
 state = {}  # holds the model and its metadata while the API runs

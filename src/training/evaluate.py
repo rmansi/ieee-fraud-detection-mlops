@@ -1,4 +1,3 @@
-import numpy as np
 from sklearn.metrics import (
     average_precision_score,
     precision_recall_curve,

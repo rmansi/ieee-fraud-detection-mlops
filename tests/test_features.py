@@ -3,7 +3,11 @@ import pandas as pd
 import pytest
 
 from src.features.build_features import (
-    NON_FEATURES, add_features, encode_categoricals, get_X_y, time_split,
+    NON_FEATURES,
+    add_features,
+    encode_categoricals,
+    get_X_y,
+    time_split,
 )
 
 

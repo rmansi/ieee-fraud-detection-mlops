@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from xgboost import XGBClassifier
 
-import src.api.main as main
+from src.api import main
 
 CATS = ["mastercard", "visa"]
 
