@@ -70,7 +70,9 @@ def prepare(features: dict) -> pd.DataFrame:
     for col in columns:
         value = features.get(col)
         if col in cat_dtypes:
-            # training category list; unseen values become blank
+            # training category list; unseen values become blank explicitly
+            if value not in cat_dtypes[col].categories:
+                value = None
             data[col] = pd.Series([value], dtype=cat_dtypes[col])
         else:
             try:
